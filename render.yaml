@@ -1,5 +1,11 @@
 # Render blueprint — https://render.com/docs/blueprint-spec
 # Push this repo to GitHub, then in Render: New → Blueprint → pick the repo.
+#
+# FREE TIER: no persistent disk, so the SQLite database is ephemeral — it
+# resets to fresh demo data on each deploy/restart, and the instance sleeps
+# after ~15 min idle (first visit wakes it in ~30s). Fine for a demo.
+# To keep data permanently, upgrade the plan and add a `disk:` block mounted
+# at /var/data plus a `DB_PATH: /var/data/monarch.db` env var.
 services:
   - type: web
     name: monarch-fight-academy
@@ -14,20 +20,10 @@ services:
       # Turn OFF Flask debug in production.
       - key: FLASK_DEBUG
         value: "0"
-      # Where the SQLite file lives — on the persistent disk below.
-      - key: DB_PATH
-        value: /var/data/monarch.db
-      # Admin-panel password. Change this from the default before sharing!
+      # Admin-panel password. Set this in the Render dashboard before sharing.
       - key: MONARCH_ADMIN_PASSWORD
         sync: false
       # Groq AI key — paste YOUR OWN (rotated) key in the Render dashboard.
       # sync:false means Render won't store it in the repo; you enter it in the UI.
       - key: GROQ_API_KEY
         sync: false
-    # NOTE: a persistent disk requires a paid plan on Render. On the FREE plan,
-    # remove this `disk:` block and the DB_PATH env var above — the app will use
-    # an ephemeral local file that resets on each deploy/restart (fine for a demo).
-    disk:
-      name: monarch-data
-      mountPath: /var/data
-      sizeGB: 1
