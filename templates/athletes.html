@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Athletes{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'events' %}
+
+{% block content %}
+<a href="{{ url_for('main.membership') }}" class="back-link">← Home</a>
+<h2 class="page-title">Athletes</h2>
+<a href="{{ url_for('main.my_athlete') }}" class="btn btn-ghost full-width mb">🙋 My athlete page</a>
+
+{% for a in athletes %}
+<details class="card athlete-card">
+    <summary class="athlete-head">
+        <span class="athlete-avatar">{{ a.name.split(' ')[0][0] }}{{ a.name.split(' ')[-1][0] }}</span>
+        <div class="athlete-main">
+            <div class="athlete-name">{{ a.name }}</div>
+            {% for d in a.disciplines %}
+            <div class="athlete-sport">{{ d.sport }}{% if d.record %} <span class="athlete-record">· {{ d.record }}</span>{% endif %}</div>
+            {% endfor %}
+        </div>
+        <span class="athlete-chev">▾</span>
+    </summary>
+    <div class="athlete-achievements">
+        <div class="ach-heading">🏆 Achievements</div>
+        {% if a.achievements %}
+        {% for ach in a.achievements %}
+        <div class="ach-row">
+            <span class="ach-ico">{{ ach['icon'] }}</span>
+            <div><div class="ach-title">{{ ach['title'] }}</div><div class="ach-date">{{ ach['year'] }}</div></div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="empty">No achievements recorded yet.</p>
+        {% endif %}
+    </div>
+</details>
+{% else %}
+<div class="card empty-state"><span class="empty-ico">🏅</span><p>No athletes listed yet.</p></div>
+{% endfor %}
+
+{# ---- Leaderboards ---- #}
+<h2 class="page-title section-gap">🏆 Leaderboards</h2>
+
+{% macro board(title, icon, rows, unit) %}
+<div class="card lb-card">
+    <div class="lb-title">{{ icon }} {{ title }}</div>
+    {% if rows %}
+    {% for r in rows %}
+    <div class="lb-row">
+        <span class="lb-rank">{{ loop.index }}</span>
+        <span class="lb-name">
+            {{ r.full_name.split(' ')[0] }}{% if r.full_name.split(' ')|length > 1 %} {{ r.full_name.split(' ')[-1][0] }}.{% endif %}
+        </span>
+        <span class="lb-val">{{ '{:,.0f}'.format(r.value) }}<small>{{ unit }}</small></span>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="empty">No data yet — log a workout to get on the board.</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{{ board('Running distance', '🏃', lb_running, ' km') }}
+{{ board('Gym sessions', '🏋️', lb_gym, '') }}
+{{ board('Weight lifted', '💪', lb_weight, ' kg') }}
+<p class="privacy-muted">🔒 Names shown privately (first name + initial).</p>
+{% endblock %}

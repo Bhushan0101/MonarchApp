@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+{% block title %}Member workouts{% endblock %}
+
+{% block content %}
+<div class="admin-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+</div>
+
+<section class="admin-section">
+    <h2>Member workouts ({{ workouts|length }})</h2>
+
+    <form method="get" action="{{ url_for('admin.workouts') }}" class="admin-filter">
+        <label>Filter by member
+            <select name="member_id" onchange="this.form.submit()">
+                <option value="">All members</option>
+                {% for m in members %}
+                    <option value="{{ m['id'] }}" {{ 'selected' if selected == m['id'] }}>{{ m['full_name'] }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        {% if selected %}<a class="admin-link" href="{{ url_for('admin.workouts') }}">clear</a>{% endif %}
+    </form>
+
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr><th>Date</th><th>Member</th><th>Type</th><th>Workout</th><th>Distance</th><th>Duration</th></tr>
+            </thead>
+            <tbody>
+            {% for w in workouts %}
+                <tr>
+                    <td>{{ w['workout_date'] }}</td>
+                    <td>{{ w['full_name'] }}</td>
+                    <td>{{ '🏃 Run' if w['kind'] == 'run' else '🏋️ Gym' }}</td>
+                    <td>{{ w['title'] }}{% if w['notes'] %}<div class="admin-sub">{{ w['notes'] }}</div>{% endif %}</td>
+                    <td>{{ '%.1f km'|format(w['distance_km']) if w['distance_km'] else '—' }}</td>
+                    <td>{{ (w['duration_min']|string + ' min') if w['duration_min'] else '—' }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="empty">No workouts logged yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

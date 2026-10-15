@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Coaches{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'coaches' %}
+
+{% block content %}
+<h2 class="page-title">Your coaches</h2>
+
+{% for coach in coaches %}
+<div class="card coach-card">
+    <div class="coach-head">
+        <div class="avatar">{{ coach['name'].split(' ')[0][0] }}{{ coach['name'].split(' ')[-1][0] }}</div>
+        <div>
+            <div class="coach-name">{{ coach['name'] }}</div>
+            <div class="coach-specialty">{{ coach['specialty'] }}</div>
+        </div>
+    </div>
+    <p class="coach-bio">{{ coach['bio'] }}</p>
+
+    <details class="coach-message">
+        <summary class="btn btn-ghost">Message</summary>
+        <form method="post" action="{{ url_for('main.message_coach', coach_id=coach['id']) }}">
+            <textarea name="body" rows="3" placeholder="Write a message to {{ coach['name'].split(' ')[0] }}…"></textarea>
+            <button class="btn btn-primary" type="submit">Send</button>
+        </form>
+    </details>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Membership{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<h2 class="greeting">Hi, {{ member['full_name'].split(' ')[0] }} 👋</h2>
+
+{# Payment / general reminders set by an admin, shown until dismissed. #}
+{% for r in reminders %}
+<div class="reminder-banner">
+    <span class="reminder-icon">{{ '💳' if r['kind'] == 'payment' else '🔔' }}</span>
+    <span class="reminder-text">{{ r['message'] }}</span>
+    <form method="post" action="{{ url_for('main.dismiss_reminder', reminder_id=r['id']) }}">
+        <button class="reminder-x" type="submit" aria-label="Dismiss">✕</button>
+    </form>
+</div>
+{% endfor %}
+
+<div class="card membership-card {{ 'is-active' if is_active else 'is-inactive' }}">
+    <div class="membership-top">
+        <span class="plan-name">{{ member['plan_name'] }}</span>
+        <span class="badge {{ 'badge-active' if is_active else 'badge-expired' }}">
+            {{ 'Active' if is_active else 'Expired' }}
+        </span>
+    </div>
+
+    {% if is_active %}
+        <div class="days-big">{{ remaining }}</div>
+        <div class="days-label">day{{ 's' if remaining != 1 }} remaining</div>
+        {% if remaining <= 7 %}
+            <div class="renew-note">⚠️ Your membership expires soon — time to renew.</div>
+        {% endif %}
+    {% else %}
+        <div class="days-big expired">Expired</div>
+        <div class="days-label">{{ -remaining }} day{{ 's' if remaining != -1 }} ago</div>
+        <div class="renew-note">Renew to book classes again.</div>
+    {% endif %}
+
+    <div class="membership-dates">
+        <div><span>Started</span><strong>{{ start_date.strftime('%d %b %Y') }}</strong></div>
+        <div><span>Expires</span><strong>{{ expiry_date.strftime('%d %b %Y') }}</strong></div>
+    </div>
+
+    <a href="{{ url_for('main.plans') }}" class="btn btn-light membership-cta">
+        {{ 'Renew / change plan' if is_active else 'Buy a membership' }}
+    </a>
+</div>
+
+{# ---- Today's classes (bookable) ---- #}
+<h3 class="page-subtitle">Today's classes</h3>
+{% if classes_today %}
+<div class="today-list">
+    {% for c in classes_today %}
+    <div class="card today-class">
+        <div class="today-time">{{ c.time }}</div>
+        <div class="today-main">
+            <div class="today-name">{{ c.name }}</div>
+            <div class="today-coach">with {{ c.coach }}{% if c.prebook %} · pre-booking{% endif %}</div>
+        </div>
+        <div class="today-action">
+            {% if c.past %}
+                <span class="muted-tag">Passed</span>
+            {% elif c.mine %}
+                <form method="post" action="{{ url_for('main.book', slot_id=c.id) }}">
+                    <input type="hidden" name="class_date" value="{{ c.date }}">
+                </form>
+                <span class="badge badge-active">Booked</span>
+            {% elif c.spots_left > 0 %}
+                <form method="post" action="{{ url_for('main.book', slot_id=c.id) }}">
+                    <input type="hidden" name="class_date" value="{{ c.date }}">
+                    <input type="hidden" name="next" value="{{ url_for('main.membership') }}">
+                    <button class="btn btn-primary btn-sm" type="submit">Book</button>
+                </form>
+            {% else %}
+                <span class="muted-tag">Full</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<a href="{{ url_for('main.classes') }}" class="see-all">See full timetable ›</a>
+{% else %}
+<div class="card empty-state">
+    <span class="empty-ico">📅</span>
+    <p>No classes scheduled today. Check the <a href="{{ url_for('main.classes') }}">full timetable</a>.</p>
+</div>
+{% endif %}
+
+<h3 class="page-subtitle">Explore</h3>
+<div class="tile-grid">
+    <a href="{{ url_for('main.classes') }}" class="tile">
+        <span class="tile-ico">📅</span><span class="tile-txt">Classes</span>
+    </a>
+    <a href="{{ url_for('main.health') }}" class="tile">
+        <span class="tile-ico">❤️</span><span class="tile-txt">Health</span>
+    </a>
+    <a href="{{ url_for('main.workouts') }}" class="tile">
+        <span class="tile-ico">📈</span><span class="tile-txt">Workouts</span>
+    </a>
+    <a href="{{ url_for('main.library') }}" class="tile">
+        <span class="tile-ico">🎬</span><span class="tile-txt">Library</span>
+    </a>
+    <a href="{{ url_for('main.pt') }}" class="tile">
+        <span class="tile-ico">🤝</span><span class="tile-txt">1-to-1</span>
+    </a>
+    <a href="{{ url_for('main.coach_ai') }}" class="tile">
+        <span class="tile-ico">🤖</span><span class="tile-txt">AI Coach</span>
+    </a>
+    <a href="{{ url_for('main.events') }}" class="tile">
+        <span class="tile-ico">🥊</span><span class="tile-txt">Events</span>
+    </a>
+    <a href="{{ url_for('main.athletes') }}" class="tile">
+        <span class="tile-ico">🏅</span><span class="tile-txt">Athletes</span>
+    </a>
+    <a href="{{ url_for('main.my_athlete') }}" class="tile">
+        <span class="tile-ico">🙋</span><span class="tile-txt">My profile</span>
+    </a>
+    <a href="{{ url_for('main.coaches') }}" class="tile">
+        <span class="tile-ico">💪</span><span class="tile-txt">Coaches</span>
+    </a>
+    <a href="{{ url_for('main.feedback') }}" class="tile">
+        <span class="tile-ico">💬</span><span class="tile-txt">Feedback</span>
+    </a>
+</div>
+
+<a href="{{ url_for('main.privacy') }}" class="privacy-footer">🔒 Privacy & my data</a>
+{% endblock %}

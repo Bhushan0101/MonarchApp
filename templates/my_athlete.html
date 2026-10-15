@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}My Athlete Page{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'events' %}
+
+{% block content %}
+<a href="{{ url_for('main.athletes') }}" class="back-link">← Athletes</a>
+<h2 class="page-title">My athlete page</h2>
+
+<div class="card athlete-hero">
+    <span class="athlete-avatar big">{{ member['full_name'].split(' ')[0][0] }}{{ member['full_name'].split(' ')[-1][0] }}</span>
+    <div class="athlete-name big">{{ member['full_name'] }}</div>
+    {% if member['athlete_sport'] %}
+        <div class="athlete-sport">{{ member['athlete_sport'] }}{% if member['athlete_record'] %} · {{ member['athlete_record'] }}{% endif %}</div>
+    {% endif %}
+    {% if member['athlete_sport2'] %}
+        <div class="athlete-sport">{{ member['athlete_sport2'] }}{% if member['athlete_record2'] %} · {{ member['athlete_record2'] }}{% endif %}</div>
+    {% endif %}
+    {% if not member['athlete_sport'] %}<div class="athlete-sport">Add your disciplines below ↓</div>{% endif %}
+</div>
+
+{# ---- My stats ---- #}
+<h3 class="page-subtitle">My stats</h3>
+<div class="workout-stats">
+    <div class="card stat"><div class="stat-num">{{ summary['total'] or 0 }}</div><div class="stat-label">Sessions</div></div>
+    <div class="card stat"><div class="stat-num">{{ '%.0f'|format(summary['total_km'] or 0) }}<span>km</span></div><div class="stat-label">Distance</div></div>
+    <div class="card stat"><div class="stat-num">{{ summary['total_min'] or 0 }}<span>min</span></div><div class="stat-label">Time</div></div>
+</div>
+
+{# ---- My leaderboard ranks ---- #}
+<h3 class="page-subtitle">My rankings</h3>
+<div class="rank-grid">
+    <div class="card rank-tile">
+        <div class="rank-ico">🏃</div>
+        <div class="rank-pos">{{ ('#' ~ ranks.running[0]) if ranks.running[0] else '—' }}</div>
+        <div class="rank-lbl">Running · {{ '%.0f'|format(ranks.running[1]) }} km</div>
+    </div>
+    <div class="card rank-tile">
+        <div class="rank-ico">🏋️</div>
+        <div class="rank-pos">{{ ('#' ~ ranks.gym[0]) if ranks.gym[0] else '—' }}</div>
+        <div class="rank-lbl">Gym · {{ ranks.gym[1]|int }} sessions</div>
+    </div>
+    <div class="card rank-tile">
+        <div class="rank-ico">💪</div>
+        <div class="rank-pos">{{ ('#' ~ ranks.weight[0]) if ranks.weight[0] else '—' }}</div>
+        <div class="rank-lbl">Lifted · {{ '{:,.0f}'.format(ranks.weight[1]) }} kg</div>
+    </div>
+</div>
+
+{# ---- My achievements ---- #}
+<h3 class="page-subtitle">My achievements</h3>
+{% if achievements %}
+<div class="card">
+    {% for ach in achievements %}
+    <div class="ach-row">
+        <span class="ach-ico">{{ ach['icon'] }}</span>
+        <div><div class="ach-title">{{ ach['title'] }}</div><div class="ach-date">{{ ach['year'] }}</div></div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card empty-state small"><p>No achievements yet. Keep training! 🥋</p></div>
+{% endif %}
+
+{# ---- Edit profile ---- #}
+<h3 class="page-subtitle">Edit profile</h3>
+<div class="card">
+    <form method="post" action="{{ url_for('main.my_athlete') }}" class="std-form">
+        <label>Discipline 1<input name="sport" value="{{ member['athlete_sport'] or '' }}" placeholder="e.g. BJJ Gi"></label>
+        <label>Record 1<input name="record" value="{{ member['athlete_record'] or '' }}" placeholder="e.g. 4-1 (white belt)"></label>
+        <label>Discipline 2 (optional)<input name="sport2" value="{{ member['athlete_sport2'] or '' }}" placeholder="e.g. K1 Kickboxing"></label>
+        <label>Record 2 (optional)<input name="record2" value="{{ member['athlete_record2'] or '' }}" placeholder="e.g. 2-0"></label>
+        <button type="submit" class="btn btn-primary full-width">Save profile</button>
+    </form>
+</div>
+{% endblock %}

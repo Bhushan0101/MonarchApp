@@ -1,0 +1,82 @@
+{% extends "admin/base.html" %}
+{% block title %}Training Library{% endblock %}
+
+{% block content %}
+<div class="admin-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+</div>
+
+<section class="admin-section card">
+    <h3>➕ Add library content</h3>
+    <form method="post" action="{{ url_for('admin.add_library_item') }}" class="admin-event-form">
+        <label>Type
+            <select name="kind">
+                <option value="video">Video</option>
+                <option value="workout">Workout plan</option>
+            </select>
+        </label>
+        <label>Trainer
+            <select name="trainer_id">
+                {% for c in coaches %}<option value="{{ c['id'] }}">{{ c['name'] }}</option>{% endfor %}
+            </select>
+        </label>
+        <label>Title<input name="title" required></label>
+        <label>Category<input name="category" placeholder="K1 / BJJ / Strength"></label>
+        <label class="full">Video URL (embed) — videos only<input name="video_url" placeholder="https://www.youtube.com/embed/..."></label>
+        <label class="full">Description (video) / Plan content (workout)
+            <textarea name="description" rows="2" placeholder="short description"></textarea>
+        </label>
+        <label class="full">Workout plan text (for workout plans)
+            <textarea name="content" rows="4" placeholder="5x5 Squat&#10;4x8 RDL&#10;..."></textarea>
+        </label>
+        <button class="btn btn-primary" type="submit">Add to library</button>
+    </form>
+</section>
+
+<section class="admin-section">
+    <h2>Library content ({{ items|length }})</h2>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>Type</th><th>Title</th><th>Category</th><th>Trainer</th><th></th></tr></thead>
+            <tbody>
+            {% for it in items %}
+                <tr>
+                    <td>{{ '🎬 Video' if it['kind'] == 'video' else '📋 Plan' }}</td>
+                    <td>{{ it['title'] }}</td>
+                    <td>{{ it['category'] }}</td>
+                    <td>{{ it['trainer_name'] or '—' }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('admin.delete_library_item', item_id=it['id']) }}">
+                            <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="empty">No library content yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="admin-section">
+    <h2>1-to-1 session requests ({{ pt_sessions|length }})</h2>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>When</th><th>Member</th><th>Coach</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for s in pt_sessions %}
+                <tr>
+                    <td>{{ s['slot_time'] }}</td>
+                    <td>{{ s['full_name'] }}</td>
+                    <td>{{ s['coach_name'] }}</td>
+                    <td><span class="badge {{ 'badge-active' if s['status'] == 'confirmed' else 'badge-expired' }}">{{ s['status'] }}</span></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4" class="empty">No 1-to-1 requests yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

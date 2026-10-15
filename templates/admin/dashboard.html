@@ -1,0 +1,119 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="admin-nav">
+    <a href="{{ url_for('admin.assistant') }}" class="btn btn-primary">🤖 AI business assistant</a>
+    <a href="{{ url_for('admin.workouts') }}" class="btn btn-ghost">📈 View member workouts</a>
+    <a href="{{ url_for('admin.library') }}" class="btn btn-ghost">🎬 Training Library & 1-to-1</a>
+    <a href="{{ url_for('admin.feedback') }}" class="btn btn-ghost">💬 Feedback & word cloud</a>
+</div>
+
+<section class="admin-section">
+    <h2>Members ({{ members|length }})</h2>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr><th>Name</th><th>Username</th><th>Plan</th><th>Status</th><th>Expires</th><th>Via</th></tr>
+            </thead>
+            <tbody>
+            {% for m in members %}
+                <tr>
+                    <td>{{ m['full_name'] }}</td>
+                    <td>{{ m['username'] }}</td>
+                    <td>{{ m['plan_name'] }}</td>
+                    <td><span class="badge {{ 'badge-active' if m['plan_status'] == 'active' else 'badge-expired' }}">{{ m['plan_status'] }}</span></td>
+                    <td>{{ m['expiry_date'] }}</td>
+                    <td>{{ m['auth_provider'] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="admin-grid">
+    <section class="admin-section card">
+        <h3>➕ Add member</h3>
+        <form method="post" action="{{ url_for('admin.add_member') }}">
+            <label>Full name<input name="full_name" required></label>
+            <label>Username<input name="username" required></label>
+            <label>Password<input name="password" placeholder="defaults to 'monarch'"></label>
+            <label>Plan
+                <select name="plan_name">
+                    {% for p in ['Day Pass','Monthly Standard','Quarterly','Unlimited Annual'] %}
+                        <option>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Access days<input name="days" type="number" value="30" min="1"></label>
+            <button class="btn btn-primary" type="submit">Create member</button>
+        </form>
+    </section>
+
+    <section class="admin-section card">
+        <h3>🔔 Set payment reminder</h3>
+        <form method="post" action="{{ url_for('admin.add_reminder') }}">
+            <label>Member
+                <select name="member_id" required>
+                    {% for m in members %}<option value="{{ m['id'] }}">{{ m['full_name'] }} ({{ m['username'] }})</option>{% endfor %}
+                </select>
+            </label>
+            <label>Type
+                <select name="kind">
+                    <option value="payment">Payment</option>
+                    <option value="general">General</option>
+                </select>
+            </label>
+            <label>Message<input name="message" placeholder="e.g. Your membership payment is due" required></label>
+            <label>Show from date<input name="due_date" type="date" required></label>
+            <button class="btn btn-primary" type="submit">Set reminder</button>
+        </form>
+    </section>
+</div>
+
+<section class="admin-section">
+    <div class="admin-section-head">
+        <h2>Fights & tournaments ({{ events|length }})</h2>
+    </div>
+
+    <section class="admin-section card">
+        <h3>➕ Add event</h3>
+        <form method="post" action="{{ url_for('admin.add_event') }}" class="admin-event-form">
+            <label>Name<input name="name" required></label>
+            <label>Type
+                <select name="kind">
+                    <option value="fight">Fight</option>
+                    <option value="tournament">Tournament</option>
+                </select>
+            </label>
+            <label>Location<input name="location" placeholder="Monarch Arena"></label>
+            <label>Date<input name="event_date" type="date" required></label>
+            <label class="full">Headline / main bout<input name="headline" placeholder="e.g. Chen vs. Alvarez — Lightweight Main Event"></label>
+            <button class="btn btn-primary" type="submit">Add event</button>
+        </form>
+    </section>
+
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Location</th><th></th></tr></thead>
+            <tbody>
+            {% for e in events %}
+                <tr>
+                    <td>{{ e['event_date'] }}</td>
+                    <td>{{ e['name'] }}<div class="admin-sub">{{ e['headline'] }}</div></td>
+                    <td>{{ e['kind'] }}</td>
+                    <td>{{ e['location'] }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('admin.delete_event', event_id=e['id']) }}">
+                            <button class="btn btn-ghost btn-sm" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

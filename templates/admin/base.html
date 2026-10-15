@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monarch Admin · {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-body">
+<div class="admin-wrap">
+    <header class="admin-topbar">
+        <span class="brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Monarch" class="brand-logo">
+            <span class="admin-tag">ADMIN</span>
+        </span>
+        {% if session.get('is_admin') %}
+            <a class="logout" href="{{ url_for('admin.logout') }}">Log out</a>
+        {% endif %}
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flashes">
+                {% for category, msg in messages %}
+                    <div class="flash flash-{{ category }}">{{ msg }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>

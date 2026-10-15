@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<h2 class="page-title">Checkout</h2>
+
+<div class="card checkout-summary">
+    <div class="checkout-row">
+        <span>{{ plan.name }}</span>
+        <strong>€{{ '%.2f'|format(plan.price) }}</strong>
+    </div>
+    <div class="checkout-sub">{{ plan.days }} day{{ 's' if plan.days != 1 }} · {{ plan.blurb }}</div>
+    <div class="checkout-divider"></div>
+    <div class="checkout-row checkout-total">
+        <span>Total</span>
+        <strong>€{{ '%.2f'|format(plan.price) }}</strong>
+    </div>
+</div>
+
+<form method="post" action="{{ url_for('main.pay', plan_name=plan.name) }}">
+    <button type="submit" class="btn btn-revolut">
+        <span class="revolut-mark">R</span> Pay with Revolut Pay
+    </button>
+</form>
+
+<p class="checkout-note">
+    This is a <strong>demo checkout</strong> — no real payment is taken. Revolut Pay
+    integration will be wired in later. Tapping the button activates your plan immediately.
+</p>
+{% endblock %}

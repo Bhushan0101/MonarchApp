@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}1-to-1 Sessions{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<a href="{{ url_for('main.membership') }}" class="back-link">← Home</a>
+<h2 class="page-title">Book a 1-to-1 session</h2>
+
+<div class="card">
+    <h3 class="form-title">Request private coaching</h3>
+    <form method="post" action="{{ url_for('main.pt_book') }}" class="std-form">
+        <label>Coach
+            <select name="coach_id" required>
+                {% for c in coaches %}
+                    <option value="{{ c['id'] }}">{{ c['name'] }} — {{ c['specialty'] }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <div class="form-row">
+            <label>Date<input name="slot_date" type="date" value="{{ today }}" required></label>
+            <label>Time<input name="slot_hour" type="time" value="18:00" required></label>
+        </div>
+        <button type="submit" class="btn btn-primary full-width">Request session</button>
+    </form>
+</div>
+
+<h3 class="page-subtitle">Your sessions</h3>
+{% for s in sessions %}
+<div class="card pt-card">
+    <div class="pt-main">
+        <div class="pt-coach">{{ s['coach_name'] }}</div>
+        <div class="pt-meta">{{ s['specialty'] }} · {{ s['slot_time'] }}</div>
+    </div>
+    <span class="badge {{ 'badge-active' if s['status'] == 'confirmed' else 'badge-expired' }}">{{ s['status'] }}</span>
+</div>
+{% else %}
+<p class="empty">No 1-to-1 sessions booked yet.</p>
+{% endfor %}
+{% endblock %}

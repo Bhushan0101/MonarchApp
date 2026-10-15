@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ item['title'] }}{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<a href="{{ url_for('main.library') }}" class="back-link">← Library</a>
+<h2 class="page-title">{{ item['title'] }}</h2>
+<div class="lib-meta big">{{ item['category'] }} · {{ item['trainer_name'] or 'Monarch' }}</div>
+
+{% if item['kind'] == 'video' %}
+    <div class="video-wrap">
+        <iframe src="{{ item['video_url'] }}" title="{{ item['title'] }}"
+                frameborder="0" allowfullscreen></iframe>
+    </div>
+    {% if item['description'] %}<p class="lib-desc">{{ item['description'] }}</p>{% endif %}
+{% else %}
+    <div class="card plan-content">{{ item['content'] }}</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Health{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'health' %}
+
+{% block content %}
+<h2 class="page-title">Health</h2>
+<p class="sub-note">Sleep, steps & activity {% if member['health_source'] %}· synced from
+    {{ 'Apple Health' if member['health_source'] == 'apple' else 'Google Fit' }}{% endif %}</p>
+
+{# ---- Big metric tiles (reference-style) ---- #}
+<div class="metric-grid">
+    <div class="card metric-tile">
+        <div class="metric-ico">👣</div>
+        <div class="metric-val">{{ '{:,}'.format(today['steps']) if today and today['steps'] else '—' }}</div>
+        <div class="metric-lbl">Steps today</div>
+    </div>
+    <div class="card metric-tile">
+        <div class="metric-ico">😴</div>
+        <div class="metric-val">{{ today['sleep_hours'] if today and today['sleep_hours'] else '—' }}<span>h</span></div>
+        <div class="metric-lbl">Sleep</div>
+    </div>
+    <div class="card metric-tile">
+        <div class="metric-ico">🔥</div>
+        <div class="metric-val">{{ '{:,}'.format(today['calories']) if today and today['calories'] else '—' }}</div>
+        <div class="metric-lbl">Calories</div>
+    </div>
+    <div class="card metric-tile">
+        <div class="metric-ico">❤️</div>
+        <div class="metric-val">{{ today['resting_hr'] if today and today['resting_hr'] else '—' }}<span>bpm</span></div>
+        <div class="metric-lbl">Resting HR</div>
+    </div>
+</div>
+
+{# ---- 7-day steps trend ---- #}
+{% if spark %}
+<div class="card trend-card">
+    <div class="trend-head">Last 7 days · steps</div>
+    <div class="spark">
+        {% for v in spark %}
+        <div class="spark-bar" style="height: {{ (8 + (v / spark_max * 100)|round)|int }}%" title="{{ '{:,}'.format(v) }} steps"></div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# ---- Connect external apps ---- #}
+<h3 class="page-subtitle">Connect your tracker</h3>
+<div class="connect-row">
+    <form method="post" action="{{ url_for('main.health_connect') }}">
+        <input type="hidden" name="source" value="apple">
+        <button class="btn btn-social btn-apple connect-btn" type="submit">
+            <span class="social-logo"></span> {{ 'Re-sync' if member['health_source'] == 'apple' else 'Connect' }} Apple Health
+        </button>
+    </form>
+    <form method="post" action="{{ url_for('main.health_connect') }}">
+        <input type="hidden" name="source" value="google">
+        <button class="btn btn-social connect-btn" type="submit">
+            <span class="social-logo">G</span> {{ 'Re-sync' if member['health_source'] == 'google' else 'Connect' }} Google Fit
+        </button>
+    </form>
+</div>
+<p class="privacy-muted">Demo sync generates sample data. Real Apple Health / Google Fit sync
+    requires the native mobile app.</p>
+
+{# ---- Manual entry (collapsible) ---- #}
+<details class="card manual-entry">
+    <summary>✏️ Enter today manually</summary>
+    <form method="post" action="{{ url_for('main.health_log') }}">
+        <div class="form-row">
+            <label>Steps<input name="steps" type="number" min="0" placeholder="e.g. 8000"></label>
+            <label>Sleep (h)<input name="sleep_hours" type="number" step="0.1" min="0" placeholder="e.g. 7.5"></label>
+        </div>
+        <div class="form-row">
+            <label>Calories<input name="calories" type="number" min="0" placeholder="e.g. 2200"></label>
+            <label>Resting HR<input name="resting_hr" type="number" min="0" placeholder="e.g. 60"></label>
+        </div>
+        <button class="btn btn-primary full-width" type="submit">Save today</button>
+    </form>
+</details>
+{% endblock %}

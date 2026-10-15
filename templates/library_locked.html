@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Training Library{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<h2 class="page-title">Virtual Training Library</h2>
+
+<div class="card paywall">
+    <div class="paywall-icon">🎬</div>
+    <div class="paywall-title">Unlock the full library</div>
+    <p class="paywall-text">
+        Technique videos and workout plans from Monarch's trainers —
+        K1, BJJ (Gi & No-Gi) and strength. New content added regularly.
+    </p>
+    <div class="paywall-price">€{{ '%.0f'|format(price) }}<span>/month</span></div>
+    <form method="post" action="{{ url_for('main.library_subscribe') }}">
+        <button type="submit" class="btn btn-revolut">
+            <span class="revolut-mark">R</span> Subscribe with Revolut Pay
+        </button>
+    </form>
+    <p class="checkout-note">Demo subscription — no real payment is taken. Renews every 30 days; cancel anytime.</p>
+</div>
+{% endblock %}

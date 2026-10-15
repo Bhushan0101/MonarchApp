@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Plans{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<a href="{{ url_for('main.membership') }}" class="back-link">← Home</a>
+<h2 class="page-title">Membership plans</h2>
+{% if active_plan %}
+<p class="sub-note">Your active plan: <strong>{{ active_plan }}</strong></p>
+{% endif %}
+
+{% for p in plans %}
+<div class="card plan-card {{ 'plan-current' if active_plan == p.name }}">
+    <div class="plan-top">
+        <div>
+            <div class="plan-title">{{ p.name }}
+                {% if active_plan == p.name %}<span class="badge badge-active">Current</span>{% endif %}
+            </div>
+            <div class="plan-blurb">{{ p.blurb }}</div>
+        </div>
+        <div class="plan-price">€{{ '%.0f'|format(p.price) }}</div>
+    </div>
+    <div class="plan-duration">{{ p.days }} day{{ 's' if p.days != 1 }} access</div>
+    <a href="{{ url_for('main.checkout', plan_name=p.name) }}" class="btn {{ 'btn-ghost' if active_plan == p.name else 'btn-primary' }} plan-choose">
+        {{ 'Renew / extend' if active_plan == p.name else 'Choose' }}
+    </a>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Feedback{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<a href="{{ url_for('main.membership') }}" class="back-link">← Home</a>
+<h2 class="page-title">Give feedback</h2>
+
+<div class="card anon-note">
+    🔒 Your feedback is <strong>completely anonymous</strong>. We don't store your name
+    or account with it — share honestly.
+</div>
+
+<div class="card">
+    <form method="post" action="{{ url_for('main.feedback') }}">
+        <label>How would you rate us? (optional)
+            <div class="rating-row">
+                {% for n in [1,2,3,4,5] %}
+                <label class="rating-opt">
+                    <input type="radio" name="rating" value="{{ n }}">
+                    <span>{{ n }}★</span>
+                </label>
+                {% endfor %}
+            </div>
+        </label>
+        <label>Your feedback
+            <textarea name="body" rows="5" placeholder="What's working? What could be better? Classes, coaches, facilities…" required></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary full-width">Submit anonymously</button>
+    </form>
+</div>
+{% endblock %}

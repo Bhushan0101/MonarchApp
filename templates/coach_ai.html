@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}AI Coach{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'coach_ai' %}
+
+{% block content %}
+<div class="chat-header">
+    <div class="chat-head-left">
+        <img src="{{ url_for('static', filename='ai-bot.png') }}" alt="" class="ai-avatar">
+        <div>
+            <h2 class="chat-title">AI Coach</h2>
+            <span class="chat-sub">Training, technique & recovery · not medical advice</span>
+        </div>
+    </div>
+    <details class="personalize">
+        <summary class="personalize-btn">⚙️ Personalize {{ '· on' if consent else '· off' }}</summary>
+        <div class="personalize-panel">
+            <form method="post" action="{{ url_for('main.ai_consent') }}" id="consent-form">
+                <label class="switch-row">
+                    <input type="checkbox" name="consent" {{ 'checked' if consent }}
+                           onchange="document.getElementById('consent-form').submit()">
+                    <span class="switch"></span>
+                    <span class="switch-text">
+                        <strong>Use my activity</strong>
+                        <small>Shares only anonymous totals — never your name or logs.</small>
+                    </span>
+                </label>
+            </form>
+            <a href="{{ url_for('main.privacy') }}" class="privacy-link">How we handle your data →</a>
+        </div>
+    </details>
+</div>
+
+{% if not ai_enabled %}
+<div class="chat-notice">⚙️ AI not configured — add <code>GROQ_API_KEY</code> to <code>.env</code>.</div>
+{% endif %}
+
+<div class="chat-thread" id="thread">
+    <div class="chat-empty" id="empty-state">
+        <img src="{{ url_for('static', filename='ai-bot.png') }}" alt="AI Coach" class="ai-avatar-big">
+        <p>Ask me anything about your training.</p>
+    </div>
+</div>
+
+<div class="chat-chips" id="chips">
+    {% for q in ["Beginner BJJ weekly schedule?", "Improve my cardio for K1?", "Recovery after hard sparring?"] %}
+    <button class="chip" type="button" onclick="ask(this.textContent)">{{ q }}</button>
+    {% endfor %}
+</div>
+
+<form class="chat-input-bar" id="chat-form" onsubmit="return onSubmit(event)">
+    <input name="question" id="q" placeholder="Ask the AI coach…" autocomplete="off" required>
+    <button type="submit" class="chat-send" id="send" aria-label="Send">↑</button>
+</form>
+
+<template id="tpl-user">
+    <div class="bubble bubble-user"></div>
+</template>
+<template id="tpl-ai">
+    <div class="bubble-wrap">
+        <img src="{{ url_for('static', filename='ai-bot.png') }}" alt="AI" class="ai-avatar">
+        <div class="bubble bubble-ai"><div class="md"></div><div class="bubble-tag" hidden>✓ personalized with your activity</div></div>
+    </div>
+</template>
+
+<script>
+const CONSENT = {{ 'true' if consent else 'false' }};
+const thread = document.getElementById('thread');
+const chips = document.getElementById('chips');
+const emptyState = document.getElementById('empty-state');
+
+function scrollDown() { window.scrollTo(0, document.body.scrollHeight); }
+
+function addUser(text) {
+    if (emptyState) emptyState.remove();
+    if (chips) chips.style.display = 'none';
+    const node = document.getElementById('tpl-user').content.cloneNode(true);
+    node.querySelector('.bubble-user').textContent = text;
+    thread.appendChild(node);
+    scrollDown();
+}
+
+/* Staged "thinking" loader bubble. */
+function addLoader() {
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap';
+    wrap.innerHTML =
+        '<img src="{{ url_for('static', filename='ai-bot.png') }}" class="ai-avatar" alt="AI">' +
+        '<div class="bubble bubble-ai loading-bubble">' +
+          '<span class="dots"><i></i><i></i><i></i></span>' +
+          '<span class="loading-text"></span>' +
+        '</div>';
+    thread.appendChild(wrap);
+    scrollDown();
+    const txt = wrap.querySelector('.loading-text');
+    // Staged status messages.
+    const stages = CONSENT
+        ? ['Accessing your activity data…', 'Thinking…', 'Writing your answer…']
+        : ['Thinking…', 'Writing your answer…'];
+    let i = 0;
+    txt.textContent = stages[0];
+    wrap._timer = setInterval(() => { i = (i + 1) % stages.length; txt.textContent = stages[i]; }, 1400);
+    return wrap;
+}
+
+function addAI(html, usedContext) {
+    const node = document.getElementById('tpl-ai').content.cloneNode(true);
+    node.querySelector('.md').innerHTML = html;
+    if (usedContext) node.querySelector('.bubble-tag').hidden = false;
+    thread.appendChild(node);
+    scrollDown();
+}
+
+async function ask(question) {
+    question = (question || '').trim();
+    if (!question) return;
+    document.getElementById('q').value = '';
+    addUser(question);
+    const loader = addLoader();
+    document.getElementById('send').disabled = true;
+    try {
+        const res = await fetch("{{ url_for('main.coach_ai_ask') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'question=' + encodeURIComponent(question),
+        });
+        const data = await res.json();
+        clearInterval(loader._timer); loader.remove();
+        if (data.answer_html) addAI(data.answer_html, data.used_context);
+        else addAI('<p>Sorry, something went wrong. Please try again.</p>', false);
+    } catch (e) {
+        clearInterval(loader._timer); loader.remove();
+        addAI('<p>Network error — please try again.</p>', false);
+    } finally {
+        document.getElementById('send').disabled = false;
+        document.getElementById('q').focus();
+    }
+}
+
+function onSubmit(e) { e.preventDefault(); ask(document.getElementById('q').value); return false; }
+</script>
+{% endblock %}

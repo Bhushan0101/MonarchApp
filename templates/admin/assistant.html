@@ -1,0 +1,51 @@
+{% extends "admin/base.html" %}
+{% block title %}AI Assistant{% endblock %}
+
+{% block content %}
+<div class="admin-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+</div>
+
+<section class="admin-section">
+    <h2>🤖 Business assistant</h2>
+    {% if not ai_enabled %}
+    <p class="tag-muted">Set GROQ_API_KEY for conversational answers — showing a rule-based briefing for now.</p>
+    {% endif %}
+</section>
+
+<div class="admin-stat-grid">
+    <div class="card stat"><div class="stat-num">{{ stats.total_members }}</div><div class="stat-label">Members</div></div>
+    <div class="card stat"><div class="stat-num">{{ stats.active_members }}</div><div class="stat-label">Active</div></div>
+    <div class="card stat"><div class="stat-num">{{ stats.expired_or_unpaid }}</div><div class="stat-label">Expired / unpaid</div></div>
+    <div class="card stat"><div class="stat-num">{{ stats.expiring_within_7d }}</div><div class="stat-label">Expiring ≤7d</div></div>
+    <div class="card stat"><div class="stat-num">€{{ '%.0f'|format(stats.total_revenue_eur) }}</div><div class="stat-label">Revenue</div></div>
+    <div class="card stat"><div class="stat-num">{{ stats.pending_pt_requests }}</div><div class="stat-label">PT requests</div></div>
+</div>
+
+{% if answer %}
+<div class="card ai-answer">
+    <div class="ai-answer-head">🤖 Assistant</div>
+    <div class="ai-answer-body md">{{ answer | markdown }}</div>
+</div>
+{% endif %}
+
+<section class="admin-section card">
+    <h3>Ask about the business</h3>
+    <form method="post" action="{{ url_for('admin.assistant') }}">
+        <label>Your question
+            <textarea name="question" rows="2" placeholder="e.g. Who needs a payment reminder? How is revenue looking?" required>{{ question }}</textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">Ask</button>
+    </form>
+    <div class="assistant-chips">
+        {% for q in ["What should I action today?", "Summarize unpaid memberships and next steps", "How healthy is retention and revenue?"] %}
+        <form method="post" action="{{ url_for('admin.assistant') }}" class="inline-form">
+            <input type="hidden" name="question" value="{{ q }}">
+            <button class="chip" type="submit">{{ q }}</button>
+        </form>
+        {% endfor %}
+    </div>
+</section>
+
+<p class="privacy-muted">🔒 Only aggregate counts are sent to the AI — never member names, emails, or individual records.</p>
+{% endblock %}

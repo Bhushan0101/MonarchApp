@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}Workouts{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'workouts' %}
+
+{% block content %}
+<h2 class="page-title">My workouts</h2>
+
+<div class="workout-stats">
+    <div class="card stat"><div class="stat-num">{{ summary['total'] or 0 }}</div><div class="stat-label">Sessions</div></div>
+    <div class="card stat"><div class="stat-num">{{ '%.0f'|format(summary['total_km'] or 0) }}<span>km</span></div><div class="stat-label">Distance run</div></div>
+    <div class="card stat"><div class="stat-num">{{ summary['total_min'] or 0 }}<span>min</span></div><div class="stat-label">Total time</div></div>
+</div>
+
+{# ---- Timer ---- #}
+<div class="card timer-card">
+    <div class="timer-display" id="timer">00:00</div>
+    <div class="timer-controls">
+        <button type="button" class="btn btn-ghost" id="timer-start" onclick="startTimer()">▶ Start</button>
+        <button type="button" class="btn btn-ghost" id="timer-stop" onclick="stopTimer()">⏸ Pause</button>
+        <button type="button" class="btn btn-ghost" onclick="resetTimer()">↺ Reset</button>
+        <button type="button" class="btn btn-primary" onclick="useTimer()">Use ⤵</button>
+    </div>
+    <div class="timer-hint">Time an exercise, then tap <strong>Use ⤵</strong> to drop the minutes into the form below.</div>
+</div>
+
+{# ---- Mode tabs ---- #}
+<div class="mode-tabs">
+    <button class="mode-tab active" data-mode="quick" onclick="setMode('quick')">Quick log</button>
+    <button class="mode-tab" data-mode="strength" onclick="setMode('strength')">Log sets</button>
+    <button class="mode-tab" data-mode="live" onclick="setMode('live')">▶ Live</button>
+</div>
+
+{# ---- Quick log (run / gym) ---- #}
+<div class="card mode-panel" id="panel-quick">
+    <form method="post" action="{{ url_for('main.add_workout') }}">
+        <div class="kind-toggle">
+            <label class="kind-opt">
+                <input type="radio" name="kind" value="gym" checked onchange="toggleKind()">
+                <span>🏋️ Gym session</span>
+            </label>
+            <label class="kind-opt">
+                <input type="radio" name="kind" value="run" onchange="toggleKind()">
+                <span>🏃 Run</span>
+            </label>
+        </div>
+        <label>Title<input name="title" placeholder="e.g. Leg day, or Morning 5k" required></label>
+        <label>Date<input name="workout_date" type="date" value="{{ today }}"></label>
+        <div class="form-row">
+            <label>Duration (min)<input name="duration_min" type="number" min="1" class="dur-target" placeholder="e.g. 45"></label>
+            <label id="distance-field">Distance (km)<input name="distance_km" type="number" step="0.1" min="0" placeholder="e.g. 5.0"></label>
+        </div>
+        <label>Notes<textarea name="notes" rows="2" placeholder="How did it go? (optional)"></textarea></label>
+        <button type="submit" class="btn btn-primary full-width">Log workout</button>
+    </form>
+</div>
+
+{# ---- Strength: sets & reps builder ---- #}
+<div class="card mode-panel" id="panel-strength" style="display:none">
+    <form method="post" action="{{ url_for('main.add_workout_sets') }}">
+        <label>Title<input name="title" placeholder="e.g. Push day" required></label>
+        <label>Date<input name="workout_date" type="date" value="{{ today }}"></label>
+
+        <div class="sets-head">
+            <span>Exercise</span><span>Reps</span><span>Weight (kg)</span><span></span>
+        </div>
+        <div id="sets-rows">
+            <!-- rows injected by JS -->
+        </div>
+        <button type="button" class="btn btn-ghost full-width" onclick="addSetRow()">+ Add set</button>
+
+        <label class="mt">Duration (min)<input name="duration_min" type="number" min="1" class="dur-target" placeholder="total time"></label>
+        <label>Notes<textarea name="notes" rows="2" placeholder="(optional)"></textarea></label>
+        <button type="submit" class="btn btn-primary full-width">Log strength workout</button>
+    </form>
+</div>
+
+{# ---- Live workout: start, add exercises & tick off sets in real time ---- #}
+<div class="card mode-panel" id="panel-live" style="display:none">
+    <div id="live-idle">
+        <p class="live-intro">Start a session and log each set as you do it. The timer runs while you train.</p>
+        <input id="live-title" placeholder="Session name (e.g. Push day)">
+        <button type="button" class="btn btn-primary full-width" onclick="liveStart()">▶ Start workout</button>
+    </div>
+
+    <div id="live-active" style="display:none">
+        <div class="live-top">
+            <span class="live-name" id="live-name-disp"></span>
+            <span class="live-clock" id="live-clock">00:00</span>
+        </div>
+
+        <div id="live-exercises"><!-- exercises injected here --></div>
+
+        <div class="live-add">
+            <input id="live-ex-name" placeholder="Add exercise (e.g. Squat)">
+            <button type="button" class="btn btn-ghost" onclick="liveAddExercise()">+ Exercise</button>
+        </div>
+
+        <div class="live-actions">
+            <button type="button" class="btn btn-ghost" onclick="liveCancel()">Discard</button>
+            <button type="button" class="btn btn-primary" onclick="liveFinish()">✓ Finish & save</button>
+        </div>
+
+        {# Hidden form that posts the collected sets to the existing endpoint. #}
+        <form method="post" action="{{ url_for('main.add_workout_sets') }}" id="live-form" style="display:none">
+            <input type="hidden" name="title" id="live-f-title">
+            <input type="hidden" name="workout_date" value="{{ today }}">
+            <input type="hidden" name="duration_min" id="live-f-dur">
+            <div id="live-f-rows"></div>
+        </form>
+    </div>
+</div>
+
+<h3 class="page-subtitle">History</h3>
+{% for w in workouts %}
+<div class="card workout-card">
+    <div class="workout-head">
+        <span class="workout-kind">{{ '🏃' if w.kind == 'run' else '🏋️' }}</span>
+        <div class="workout-main">
+            <div class="workout-title">{{ w.title }}</div>
+            <div class="workout-when">{{ w.when }}</div>
+        </div>
+    </div>
+    <div class="workout-metrics">
+        {% if w.distance_km %}<span>📏 {{ '%.1f'|format(w.distance_km) }} km</span>{% endif %}
+        {% if w.duration_min %}<span>⏱️ {{ w.duration_min }} min</span>{% endif %}
+    </div>
+    {% if w.sets %}
+    <div class="sets-list">
+        {% for s in w.sets %}
+        <div class="set-line">
+            <span class="set-ex">{{ s['exercise'] }}</span>
+            <span class="set-detail">Set {{ s['set_no'] }} · {{ s['reps'] or '—' }} reps{% if s['weight_kg'] %} · {{ '%.1f'|format(s['weight_kg']) }} kg{% endif %}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if w.notes %}<div class="workout-notes">{{ w.notes }}</div>{% endif %}
+</div>
+{% else %}
+<p class="empty">No workouts yet — log your first one above.</p>
+{% endfor %}
+
+<script>
+/* ----- quick-log run/gym toggle ----- */
+function toggleKind() {
+    var checked = document.querySelector('#panel-quick input[name=kind]:checked');
+    var isRun = checked && checked.value === 'run';
+    document.getElementById('distance-field').style.display = isRun ? '' : 'none';
+}
+
+/* ----- mode tabs ----- */
+function setMode(mode) {
+    document.querySelectorAll('.mode-tab').forEach(function(t){
+        t.classList.toggle('active', t.dataset.mode === mode);
+    });
+    document.getElementById('panel-quick').style.display = mode === 'quick' ? '' : 'none';
+    document.getElementById('panel-strength').style.display = mode === 'strength' ? '' : 'none';
+    document.getElementById('panel-live').style.display = mode === 'live' ? '' : 'none';
+}
+
+/* ----- sets & reps row builder ----- */
+function addSetRow(ex, reps, weight) {
+    var row = document.createElement('div');
+    row.className = 'set-row';
+    row.innerHTML =
+        '<input name="exercise" placeholder="e.g. Squat" value="' + (ex || '') + '">' +
+        '<input name="reps" type="number" min="0" placeholder="reps" value="' + (reps || '') + '">' +
+        '<input name="weight" type="number" step="0.5" min="0" placeholder="kg" value="' + (weight || '') + '">' +
+        '<button type="button" class="row-x" onclick="this.parentNode.remove()">✕</button>';
+    document.getElementById('sets-rows').appendChild(row);
+}
+addSetRow();  // start with one empty row
+
+/* ----- timer ----- */
+var timerSecs = 0, timerInt = null;
+function fmt(s){ var m = Math.floor(s/60), r = s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; }
+function render(){ document.getElementById('timer').textContent = fmt(timerSecs); }
+function startTimer(){ if (timerInt) return; timerInt = setInterval(function(){ timerSecs++; render(); }, 1000); }
+function stopTimer(){ clearInterval(timerInt); timerInt = null; }
+function resetTimer(){ stopTimer(); timerSecs = 0; render(); }
+function useTimer(){
+    var mins = Math.max(1, Math.round(timerSecs/60));
+    document.querySelectorAll('.dur-target').forEach(function(inp){ inp.value = mins; });
+    flash('Added ' + mins + ' min to the form.');
+}
+function flash(msg){
+    var el = document.getElementById('timer-flash');
+    if(!el){ el = document.createElement('div'); el.id='timer-flash'; el.className='timer-flash'; document.querySelector('.timer-card').appendChild(el); }
+    el.textContent = msg; setTimeout(function(){ el.textContent=''; }, 2500);
+}
+
+toggleKind();
+
+/* ===== Live workout ===== */
+var liveSecs = 0, liveInt = null, liveName = '';
+function liveFmt(s){ var m=Math.floor(s/60),r=s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; }
+
+function liveStart() {
+    liveName = (document.getElementById('live-title').value || 'Gym session').trim();
+    document.getElementById('live-name-disp').textContent = liveName;
+    document.getElementById('live-idle').style.display = 'none';
+    document.getElementById('live-active').style.display = '';
+    liveSecs = 0;
+    document.getElementById('live-clock').textContent = '00:00';
+    liveInt = setInterval(function(){ liveSecs++; document.getElementById('live-clock').textContent = liveFmt(liveSecs); }, 1000);
+    liveAddExercise('');  // start with one exercise block
+}
+
+function liveAddExercise(preset) {
+    var name = (typeof preset === 'string') ? preset : (document.getElementById('live-ex-name').value || '').trim();
+    if (typeof preset !== 'string') {
+        if (!name) return;
+        document.getElementById('live-ex-name').value = '';
+    }
+    var block = document.createElement('div');
+    block.className = 'live-ex';
+    block.innerHTML =
+        '<div class="live-ex-head"><input class="live-ex-name" placeholder="Exercise name" value="' + (name || '') + '">' +
+        '<button type="button" class="row-x" onclick="this.closest(\'.live-ex\').remove()">✕</button></div>' +
+        '<div class="live-sets"></div>' +
+        '<button type="button" class="btn btn-ghost btn-sm live-add-set" onclick="liveAddSet(this)">+ Add set</button>';
+    document.getElementById('live-exercises').appendChild(block);
+    liveAddSet(block.querySelector('.live-add-set'));
+}
+
+function liveAddSet(btn) {
+    var container = btn.previousElementSibling; // .live-sets
+    var n = container.children.length + 1;
+    var row = document.createElement('div');
+    row.className = 'live-set';
+    row.innerHTML =
+        '<span class="live-set-no">Set ' + n + '</span>' +
+        '<input type="number" min="0" class="live-reps" placeholder="reps">' +
+        '<input type="number" min="0" step="0.5" class="live-wt" placeholder="kg">' +
+        '<button type="button" class="live-check" onclick="this.classList.toggle(\'done\')">✓</button>';
+    container.appendChild(row);
+}
+
+function liveFinish() {
+    // Collect exercises/sets into the hidden form's parallel arrays.
+    var rows = document.getElementById('live-f-rows');
+    rows.innerHTML = '';
+    var any = false;
+    document.querySelectorAll('#live-exercises .live-ex').forEach(function(ex){
+        var exName = (ex.querySelector('.live-ex-name').value || '').trim();
+        if (!exName) return;
+        ex.querySelectorAll('.live-set').forEach(function(set){
+            any = true;
+            var reps = set.querySelector('.live-reps').value;
+            var wt = set.querySelector('.live-wt').value;
+            rows.insertAdjacentHTML('beforeend',
+                '<input type="hidden" name="exercise" value="' + exName.replace(/"/g,'&quot;') + '">' +
+                '<input type="hidden" name="reps" value="' + reps + '">' +
+                '<input type="hidden" name="weight" value="' + wt + '">');
+        });
+    });
+    if (!any) { alert('Add at least one exercise with a set.'); return; }
+    clearInterval(liveInt);
+    document.getElementById('live-f-title').value = liveName;
+    document.getElementById('live-f-dur').value = Math.max(1, Math.round(liveSecs/60));
+    document.getElementById('live-form').submit();
+}
+
+function liveCancel() {
+    if (!confirm('Discard this workout?')) return;
+    clearInterval(liveInt);
+    document.getElementById('live-exercises').innerHTML = '';
+    document.getElementById('live-active').style.display = 'none';
+    document.getElementById('live-idle').style.display = '';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+# Render blueprint — https://render.com/docs/blueprint-spec
+# Push this repo to GitHub, then in Render: New → Blueprint → pick the repo.
+services:
+  - type: web
+    name: monarch-fight-academy
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app
+    envVars:
+      # Flask session signing key — Render generates a random value for you.
+      - key: SECRET_KEY
+        generateValue: true
+      # Turn OFF Flask debug in production.
+      - key: FLASK_DEBUG
+        value: "0"
+      # Where the SQLite file lives — on the persistent disk below.
+      - key: DB_PATH
+        value: /var/data/monarch.db
+      # Admin-panel password. Change this from the default before sharing!
+      - key: MONARCH_ADMIN_PASSWORD
+        sync: false
+      # Groq AI key — paste YOUR OWN (rotated) key in the Render dashboard.
+      # sync:false means Render won't store it in the repo; you enter it in the UI.
+      - key: GROQ_API_KEY
+        sync: false
+    # NOTE: a persistent disk requires a paid plan on Render. On the FREE plan,
+    # remove this `disk:` block and the DB_PATH env var above — the app will use
+    # an ephemeral local file that resets on each deploy/restart (fine for a demo).
+    disk:
+      name: monarch-data
+      mountPath: /var/data
+      sizeGB: 1

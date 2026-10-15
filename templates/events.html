@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'events' %}
+
+{% block content %}
+<h2 class="page-title">My events</h2>
+{% if mine %}
+{% for e in mine %}
+<a href="{{ url_for('main.event_detail', event_id=e.id) }}" class="card event-card event-link">
+    <div class="event-head">
+        <span class="event-kind kind-{{ e.kind }}">
+            {{ '🥊 Fight' if e.kind == 'fight' else '🏆 Tournament' }}
+        </span>
+        <span class="badge {{ 'badge-active' if e.status == 'confirmed' else 'badge-expired' }}">{{ e.status }}</span>
+    </div>
+    <div class="event-name">{{ e.name }}</div>
+    <div class="event-meta">📍 {{ e.location }}</div>
+    <div class="event-meta">🗓️ {{ e.when }} · {{ e.time }}</div>
+    <div class="event-open">View participants ›</div>
+</a>
+{% endfor %}
+{% else %}
+<div class="card empty-state">
+    <span class="empty-ico">🎟️</span>
+    <p>You're not registered for any events yet. Browse what's coming up below.</p>
+</div>
+{% endif %}
+
+<h2 class="page-title section-gap">Upcoming events</h2>
+{% for e in events %}
+<a href="{{ url_for('main.event_detail', event_id=e.id) }}" class="card event-card event-link">
+    <div class="event-head">
+        <span class="event-kind kind-{{ e.kind }}">
+            {{ '🥊 Fight' if e.kind == 'fight' else '🏆 Tournament' }}
+        </span>
+        {% if e.registered %}<span class="badge badge-active">Registered</span>
+        {% elif e.days <= 14 %}
+            <span class="event-countdown">
+                {% if e.days == 0 %}Today{% elif e.days == 1 %}Tomorrow{% else %}in {{ e.days }} days{% endif %}
+            </span>
+        {% endif %}
+    </div>
+    <div class="event-name">{{ e.name }}</div>
+    <div class="event-headline">{{ e.headline }}</div>
+    <div class="event-meta">📍 {{ e.location }}</div>
+    <div class="event-meta">🗓️ {{ e.when }}</div>
+</a>
+{% else %}
+<div class="card empty-state"><span class="empty-ico">🥊</span><p>No upcoming events.</p></div>
+{% endfor %}
+
+<h2 class="page-title section-gap">🏆 Gym achievements</h2>
+<div class="card achievements-card">
+    {% for a in achievements %}
+    <div class="achievement">
+        <span class="achievement-icon">{{ a['icon'] }}</span>
+        <div class="achievement-body">
+            <div class="achievement-title">{{ a['title'] }}</div>
+            <div class="achievement-sub">{{ a['athlete'] }} · {{ a['year'] }}</div>
+        </div>
+    </div>
+    {% else %}
+    <p class="empty">No achievements yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}

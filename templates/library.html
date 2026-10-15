@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Training Library{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<div class="library-head">
+    <h2 class="page-title">Training Library</h2>
+    <span class="sub-badge">✓ Subscribed</span>
+</div>
+<p class="sub-note">Active until {{ member['library_sub_until'] }} ·
+    <form method="post" action="{{ url_for('main.library_cancel') }}" class="inline-form">
+        <button class="link-btn" type="submit">cancel</button>
+    </form>
+</p>
+
+<h3 class="page-subtitle">🎬 Technique videos</h3>
+{% for v in videos %}
+<a href="{{ url_for('main.library_item', item_id=v['id']) }}" class="card lib-card">
+    <div class="lib-thumb">▶</div>
+    <div class="lib-main">
+        <div class="lib-title">{{ v['title'] }}</div>
+        <div class="lib-meta">{{ v['category'] }} · {{ v['trainer_name'] or 'Monarch' }}</div>
+    </div>
+</a>
+{% endfor %}
+
+<h3 class="page-subtitle">📋 Workout plans</h3>
+{% for p in plans %}
+<a href="{{ url_for('main.library_item', item_id=p['id']) }}" class="card lib-card">
+    <div class="lib-thumb plan">📋</div>
+    <div class="lib-main">
+        <div class="lib-title">{{ p['title'] }}</div>
+        <div class="lib-meta">{{ p['category'] }} · {{ p['trainer_name'] or 'Monarch' }}</div>
+    </div>
+</a>
+{% endfor %}
+{% endblock %}

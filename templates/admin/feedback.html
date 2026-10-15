@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+{% block title %}Feedback{% endblock %}
+
+{% block content %}
+<div class="admin-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+</div>
+
+<section class="admin-section">
+    <h2>Member feedback ({{ count }}) · anonymous</h2>
+</section>
+
+<section class="admin-section card">
+    <h3>🤖 AI summary {% if not used_ai %}<span class="tag-muted">keyword fallback</span>{% endif %}</h3>
+    <div class="ai-summary md">{{ summary | markdown }}</div>
+</section>
+
+<section class="admin-section">
+    <h3>☁️ Word cloud — what members mention most</h3>
+    <div class="card word-cloud">
+        {% for w in cloud %}
+        <span class="cloud-word" style="font-size: {{ w.size }}rem; font-weight: {{ w.weight }};"
+              title="{{ w.count }} mention(s)">{{ w.word }}</span>
+        {% else %}
+        <p class="empty">No feedback yet.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="admin-section">
+    <h3>Recent feedback</h3>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>When</th><th>Rating</th><th>Feedback</th></tr></thead>
+            <tbody>
+            {% for f in recent %}
+                <tr>
+                    <td>{{ f['created_at'][:10] }}</td>
+                    <td>{{ (f['rating']|string + '★') if f['rating'] else '—' }}</td>
+                    <td>{{ f['body'] }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3" class="empty">No feedback yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

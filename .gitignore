@@ -1,0 +1,36 @@
+# Secrets & local config — never commit
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+secrets.json
+
+# Local database (contains member data)
+monarch.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.Python
+*.egg-info/
+
+# Node / build artifacts (none now, but excluded for safety)
+node_modules/
+dist/
+build/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local Claude Code settings
+.claude/

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0d0d0d">
+    <title>Monarch · {% block title %}{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+    {% block header %}
+    <header class="topbar">
+        <span class="brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Monarch" class="brand-logo">
+        </span>
+        {% if show_logout %}<a class="logout" href="{{ url_for('auth.logout') }}">Log out</a>{% endif %}
+    </header>
+    {% endblock %}
+
+    <main class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, msg in messages %}
+                        <div class="flash flash-{{ category }}">{{ msg }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block nav %}
+    <nav class="tabbar">
+        <a href="{{ url_for('main.membership') }}" class="tab {{ 'active' if active_tab == 'membership' }}">
+            <span class="tab-icon">🏠</span><span>Home</span>
+        </a>
+        <a href="{{ url_for('main.workouts') }}" class="tab {{ 'active' if active_tab == 'workouts' }}">
+            <span class="tab-icon">📈</span><span>Workouts</span>
+        </a>
+        <a href="{{ url_for('main.health') }}" class="tab {{ 'active' if active_tab == 'health' }}">
+            <span class="tab-icon">❤️</span><span>Health</span>
+        </a>
+        <a href="{{ url_for('main.coach_ai') }}" class="tab {{ 'active' if active_tab == 'coach_ai' }}">
+            <span class="tab-icon">🤖</span><span>AI Coach</span>
+        </a>
+        <a href="{{ url_for('main.events') }}" class="tab {{ 'active' if active_tab == 'events' }}">
+            <span class="tab-icon">🥊</span><span>Events</span>
+        </a>
+    </nav>
+    {% endblock %}
+</div>
+<script>
+/* Show a spinner on normal form submits (not the AI chat, which handles its
+   own staged loader). Marks the clicked submit button as loading. */
+document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (form.id === 'chat-form' || form.id === 'consent-form') return;
+    var btn = form.querySelector('button[type=submit], button:not([type])');
+    if (btn && !btn.disabled) { btn.classList.add('is-loading'); }
+}, true);
+</script>
+</body>
+</html>

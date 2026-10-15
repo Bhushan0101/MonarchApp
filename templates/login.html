@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+
+{# Login page has no top bar logout and no bottom tabs. #}
+{% block header %}{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="login">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Monarch Fight Academy" class="login-logo-img">
+    <p class="login-sub">Your membership, classes & coaches</p>
+
+    <form method="post" class="card login-card">
+        <label>Username
+            <input type="text" name="username" autocomplete="username" autofocus required>
+        </label>
+        <label>Password
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+
+    <div class="divider"><span>or continue with</span></div>
+
+    <div class="social-buttons">
+        <a href="{{ url_for('auth.social_login', provider='google') }}" class="btn btn-social">
+            <span class="social-logo">G</span> Continue with Google
+        </a>
+        <a href="{{ url_for('auth.social_login', provider='apple') }}" class="btn btn-social btn-apple">
+            <span class="social-logo"></span> Continue with Apple
+        </a>
+    </div>
+
+    <div class="demo-hint">
+        <strong>Demo logins</strong> (password: <code>monarch</code>)<br>
+        <code>sarah</code> · active &nbsp; <code>mike</code> · expiring soon &nbsp; <code>ava</code> · expired<br>
+        <a href="{{ url_for('admin.login') }}" class="admin-link">Admin panel →</a>
+    </div>
+</div>
+{% endblock %}

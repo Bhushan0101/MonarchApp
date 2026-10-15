@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ ev['name'] }}{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'events' %}
+
+{% block content %}
+<a href="{{ url_for('main.events') }}" class="back-link">← Events</a>
+<h2 class="page-title">{{ ev['name'] }}</h2>
+
+<div class="card">
+    <div class="event-head">
+        <span class="event-kind kind-{{ ev['kind'] }}">
+            {{ '🥊 Fight' if ev['kind'] == 'fight' else '🏆 Tournament' }}
+        </span>
+        {% if my_status %}<span class="badge badge-active">{{ my_status }}</span>{% endif %}
+    </div>
+    <div class="event-headline">{{ ev['headline'] }}</div>
+    <div class="event-meta">📍 {{ ev['location'] }}</div>
+    <div class="event-meta">🗓️ {{ when }}</div>
+
+    {% if my_status %}
+    <form method="post" action="{{ url_for('main.event_unregister', event_id=ev['id']) }}">
+        <button class="btn btn-ghost full-width mt" type="submit">Withdraw from event</button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('main.event_register', event_id=ev['id']) }}">
+        <button class="btn btn-primary full-width mt" type="submit">Register for this event</button>
+    </form>
+    {% endif %}
+</div>
+
+<h3 class="page-subtitle">Participants · {{ count }}</h3>
+{% if participants %}
+<div class="card participants-card">
+    {% for p in participants %}
+    <div class="participant">
+        <span class="participant-avatar">{{ p['full_name'][0] }}</span>
+        <span class="participant-name">
+            {# Privacy: show first name + last initial, not full identity. #}
+            {{ p['full_name'].split(' ')[0] }}
+            {%- if p['full_name'].split(' ')|length > 1 %} {{ p['full_name'].split(' ')[-1][0] }}.{% endif %}
+        </span>
+        <span class="badge {{ 'badge-active' if p['status'] == 'confirmed' else 'badge-expired' }}">{{ p['status'] }}</span>
+    </div>
+    {% endfor %}
+</div>
+<p class="privacy-muted">🔒 Participant names are shown privately (first name + initial) per our privacy settings.</p>
+{% else %}
+<div class="card empty-state"><span class="empty-ico">👥</span><p>No participants registered yet. Be the first!</p></div>
+{% endif %}
+{% endblock %}

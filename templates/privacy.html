@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Privacy{% endblock %}
+{% set show_logout = True %}
+{% set active_tab = 'membership' %}
+
+{% block content %}
+<a href="{{ url_for('main.membership') }}" class="back-link">← Home</a>
+<h2 class="page-title">Privacy & your data</h2>
+
+<div class="card privacy-block">
+    <h3>What we store</h3>
+    <p>Your account (name, email), membership, class bookings, workouts you log,
+       1-to-1 requests and payments — all kept inside this app only, to run your
+       membership. We don't sell or share it, and we don't use it for anything
+       beyond providing the service.</p>
+</div>
+
+<div class="card privacy-block">
+    <h3>The AI coach</h3>
+    <p>The AI feature is powered by Groq (a third-party processor). We only send
+       it your <strong>question</strong> and — <em>only if you opt in</em> —
+       <strong>anonymous activity totals</strong> (e.g. number of classes and
+       workouts). We never send your name, email, username, or your raw logs.
+       Conversations are <strong>not stored</strong> — each question is
+       processed once and then gone.</p>
+    <p class="privacy-muted">AI personalization is {{ 'available' if ai_enabled else 'currently not configured' }}.
+       It is off by default and you choose when to enable it.</p>
+</div>
+
+<div class="card privacy-block">
+    <h3>Anonymous feedback</h3>
+    <p>Feedback you submit is stored with <strong>no link to your account</strong>
+       — we cannot tell who wrote it, by design.</p>
+</div>
+
+<div class="card privacy-block">
+    <h3>Your rights (GDPR)</h3>
+    <ul class="privacy-list">
+        <li><strong>Access / portability</strong> — ask us for a copy of your data.</li>
+        <li><strong>Rectification</strong> — ask us to correct anything wrong.</li>
+        <li><strong>Erasure</strong> — delete everything, right now, below.</li>
+        <li><strong>Withdraw consent</strong> — turn off AI personalization anytime.</li>
+    </ul>
+</div>
+
+<div class="card privacy-danger">
+    <h3>Delete my data</h3>
+    <p>This permanently erases your account and all linked data (bookings,
+       workouts, sessions, reminders, payments). This cannot be undone.</p>
+    <form method="post" action="{{ url_for('main.privacy_erase') }}">
+        <label>Type <code>DELETE</code> to confirm
+            <input name="confirm" placeholder="DELETE" autocomplete="off">
+        </label>
+        <button type="submit" class="btn btn-danger full-width">Erase my data permanently</button>
+    </form>
+</div>
+{% endblock %}
